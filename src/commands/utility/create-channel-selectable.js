@@ -89,7 +89,7 @@ module.exports = {
       const role1 = i.guild.roles.cache.get(roles[0]);
       const role2 = i.guild.roles.cache.get(roles[1]);
       const channelName = role1.name + " vs " + role2.name;
-      const starterMessage = `Match is starting soon: <@&${role1.id}> vs <@&${role2.id}>`;
+      const starterMessage = `Match is starting soon: ${role1} vs ${role2}`;
       await i.reply({
         content: `Creating match channel with roles ${role1.name} and ${role2.name}...`,
         ephemeral: true,
