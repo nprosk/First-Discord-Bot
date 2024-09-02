@@ -38,6 +38,7 @@ module.exports = {
     const response = await interaction.reply({
       content: "Choose the two teams",
       components: [row1, row2, row3],
+      ephemeral: true,
     });
 
     const collector = response.createMessageComponentCollector({
@@ -52,7 +53,12 @@ module.exports = {
 
     collector.on("collect", async (i) => {
       const selection = i.values[0];
-      roles.push(selection);
+      if (i.customId === "team1") {
+        roles[0] = selection;
+      }
+      if (i.customId === "team2") {
+        roles[1] = selection;
+      }
       await i.reply({
         content: `Selected ${i.guild.roles.cache.get(selection).name}`,
         ephemeral: true,
@@ -61,6 +67,18 @@ module.exports = {
 
     confirmationCollector.on("collect", async (i) => {
       if (roles.length < 2) {
+        await i.reply({
+          content: "You need to select two teams!",
+          ephemeral: true,
+        });
+        return;
+      } else if (roles[0] === roles[1]) {
+        await i.reply({
+          content: "You need to select two different teams!",
+          ephemeral: true,
+        });
+        return;
+      } else if (!roles[0] || !roles[1]) {
         await i.reply({
           content: "You need to select two teams!",
           ephemeral: true,
