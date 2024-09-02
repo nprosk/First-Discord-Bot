@@ -1,6 +1,5 @@
 const { Events } = require("discord.js");
 
-// come up with a bunch of hate messages for <@425857682877054988>
 const responses = [
   `<@425857682877054988> probably talks to NPCs in real life.`,
   `<@425857682877054988> is the kind of person who claps when the plane lands.`,
