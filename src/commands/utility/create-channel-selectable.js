@@ -7,6 +7,8 @@ const {
   ChannelType,
   PermissionFlagsBits,
   ComponentType,
+  StringSelectMenuBuilder,
+  StringSelectMenuOptionBuilder,
 } = require("discord.js");
 
 module.exports = {
@@ -24,6 +26,20 @@ module.exports = {
       .setPlaceholder("Select team 2")
       .addDefaultRoles();
 
+    const weekOptions = [];
+    for (i = 1; i < 8; i++) {
+      weekOptions.push(
+        new StringSelectMenuOptionBuilder()
+          .setLabel(`Week ${i}`)
+          .setDescription(`This match will be played in week ${i}`)
+          .setValue(`Week ${i}`)
+      );
+    }
+    const week = new StringSelectMenuBuilder()
+      .setOptions(weekOptions)
+      .setCustomId("week")
+      .setPlaceholder("Select week");
+
     const confirm = new ButtonBuilder()
       .setCustomId("create-channel")
       .setLabel("Create Channel")
@@ -31,18 +47,25 @@ module.exports = {
 
     const row1 = new ActionRowBuilder().addComponents(team1);
     const row2 = new ActionRowBuilder().addComponents(team2);
-    const row3 = new ActionRowBuilder().addComponents(confirm);
+    const row3 = new ActionRowBuilder().addComponents(week);
+    const row4 = new ActionRowBuilder().addComponents(confirm);
 
     const roles = [];
+    let weekSelection;
 
     const response = await interaction.reply({
       content: "Choose the two teams",
-      components: [row1, row2, row3],
+      components: [row1, row2, row3, row4],
       ephemeral: true,
     });
 
-    const collector = response.createMessageComponentCollector({
+    const teamCollector = response.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
+      time: 3_600_000,
+    });
+
+    const weekCollector = response.createMessageComponentCollector({
+      componentType: ComponentType.StringSelect,
       time: 3_600_000,
     });
 
@@ -51,7 +74,7 @@ module.exports = {
       time: 3_600_000,
     });
 
-    collector.on("collect", async (i) => {
+    teamCollector.on("collect", async (i) => {
       const selection = i.values[0];
       if (i.customId === "team1") {
         roles[0] = selection;
@@ -61,6 +84,14 @@ module.exports = {
       }
       await i.reply({
         content: `Selected ${i.guild.roles.cache.get(selection).name}`,
+        ephemeral: true,
+      });
+    });
+
+    weekCollector.on("collect", async (i) => {
+      weekSelection = i.values[0];
+      await i.reply({
+        content: `Selected ${weekSelection}`,
         ephemeral: true,
       });
     });
@@ -86,6 +117,14 @@ module.exports = {
         return;
       }
 
+      if (!weekSelection) {
+        await i.reply({
+          content: "You need to select a week!",
+          ephemeral: true,
+        });
+        return;
+      }
+
       const role1 = i.guild.roles.cache.get(roles[0]);
       const role2 = i.guild.roles.cache.get(roles[1]);
       const channelName = role1.name + " vs " + role2.name;
@@ -102,11 +141,11 @@ module.exports = {
         parent:
           i.guild.channels.cache.find(
             (channel) =>
-              channel.name === "Match Channels" &&
+              (channel.name === ("Match Channels: " + weekSelection)) &&
               channel.type === ChannelType.GuildCategory
           ) ||
           (await guild.channels.create({
-            name: "Match Channels",
+            name: "Match Channels: " + weekSelection,
             type: ChannelType.GuildCategory,
           })),
         permissionOverwrites: [
@@ -126,6 +165,10 @@ module.exports = {
       });
 
       await channel.send(starterMessage);
+      await i.editReply({
+        content: `Match channel created: <#${channel.id}>, for ${weekSelection}`,
+        components: [],
+      });
     });
   },
 };
