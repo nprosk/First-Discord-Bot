@@ -1,17 +1,11 @@
 const { Events, ChannelType, PermissionFlagsBits } = require("discord.js");
-const { replyOrEditReply } = require("../utils/functions");
+const { replyOrEditReply, parseDatabase } = require("../utils/functions");
 const fs = require("fs");
 
 module.exports = {
   name: Events.InteractionCreate,
   async execute(interaction) {
-    let db;
-    try {
-      const data = fs.readFileSync("db.json", "utf8");
-      db = JSON.parse(data);
-    } catch (err) {
-      console.error(err);
-    }
+    let db = parseDatabase();
 
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
@@ -82,11 +76,7 @@ module.exports = {
       const role2 = guild.roles.cache.get(db.roles[1]);
       const channelName = role1.name + " vs " + role2.name;
       const starterMessage = `Match is starting soon: ${role1} vs ${role2}`;
-      await replyOrEditReply(
-        interaction,
-        `Creating match channel with roles ${role1.name} and ${role2.name}...`,
-        true
-      );
+      interaction.deferReply({ ephemeral: true });
 
       
       const channel = await guild.channels.create({
@@ -132,14 +122,10 @@ module.exports = {
       if (interaction.customId === "team2") {
         db.roles[1] = selection;
       }
-      await replyOrEditReply(
-        interaction,
-        `Selected ${interaction.guild.roles.cache.get(selection).name}`,
-        true
-      );
+      interaction.deferUpdate();
     } else if (interaction.isStringSelectMenu()) {
       db.weekSelection = interaction.values[0];
-      await replyOrEditReply(interaction, `Selected ${db.weekSelection}`, true);
+      interaction.deferUpdate();
     }
 
     try {

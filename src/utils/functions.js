@@ -1,3 +1,5 @@
+const fs = require("fs");
+
 module.exports = {
   async replyOrEditReply(interaction, msg, ephemeral = false) {
     if (interaction.replied || interaction.deferred) {
@@ -11,4 +13,14 @@ module.exports = {
       ephemeral: ephemeral,
     });
   },
+  parseDatabase() {
+    try {
+      const data = fs.readFileSync("db.json", "utf8");
+      return JSON.parse(data);
+    }
+    catch (err) {
+      console.error(err);
+      return null;
+    }
+  }
 };
